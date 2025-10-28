@@ -22,6 +22,7 @@ I plan to analyze videos and comments on Bilibili (https://www.bilibili.com/), a
 
 ##### Step 1
 My first step is to analyze:
+
 - the number of videos related to each dialect
 - the number of views of each video
 - the number of likes of each video
