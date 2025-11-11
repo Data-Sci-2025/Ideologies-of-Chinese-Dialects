@@ -1,0 +1,163 @@
+# Progress Report 2_Data
+Zihan Gao
+
+## Progress report 2
+
+## Zihan Gao
+
+## Nov 11, 2025
+
+### Notes at the beginning
+
+I wasn’t able to finish the data collection process by noon on November
+11. I will list one example and complete the related questions first,
+then apply the same procedure to the other four dialects.
+
+### Data Type
+
+- Existing, but I have added/changed a lot.
+- I also want to note that I asked ChatGPT for a lot of help because I
+  really had no idea how to extract data from a dynamic website. I did
+  try using the textbook, including the code, packages, and functions
+  mentioned there, but most of the current code was written by ChatGPT.
+  There are still two lines that I don’t fully understand.
+
+### My study
+
+#### Title
+
+Dialects reduce attractiveness?: A Study of Language Attitudes and
+Stereotypes toward Chinese Dialects on Social Media
+
+### Update of code
+
+In the previous progress report, I managed to extract the titles of
+videos on the first page. During the past week, I worked on figuring out
+how to turn pages and extract the number of views for each video.
+However, I wasn’t able to make it work. Because the website is dynamic,
+the code always returned `character(0)`. Therefore, I tried sorting the
+results by view count and extracting only the titles from the first
+page. With help from ChatGPT, this approach worked. The code is shown
+below.
+
+#### Step 1 extract the titles, name of uploaders, and the date when the video was uploaded
+
+``` r
+# load packages
+library(rvest)
+library(chromote)
+library(dplyr)
+```
+
+
+    Attaching package: 'dplyr'
+
+    The following objects are masked from 'package:stats':
+
+        filter, lag
+
+    The following objects are masked from 'package:base':
+
+        intersect, setdiff, setequal, union
+
+``` r
+library(writexl)
+```
+
+``` r
+# create Chromote session
+b <- ChromoteSession$new()
+
+# name keyword (Cantonese), and rank by number of views
+keyword <- "粤语"
+url <- paste0(
+  "https://search.bilibili.com/all?keyword=",
+  URLencode(keyword),
+  "&order=click"  # rank by views
+)
+
+# open the page
+b$Page$navigate(url)
+```
+
+    $frameId
+    [1] "38D0913075057B0386BE8AD9E04307BC"
+
+    $loaderId
+    [1] "F94F415864DEE51AD8EF9A1356B2497A"
+
+    $isDownload
+    [1] FALSE
+
+``` r
+# wait time
+Sys.sleep(6)
+
+# get the HTML
+html_text <- b$Runtime$evaluate("document.documentElement.outerHTML")$result$value
+html <- read_html(html_text)
+
+# I actually don't understand this step below
+cards <- html_elements(html, ".bili-video-card")
+
+# extract the keyword
+titles <- cards |> html_element(".bili-video-card__info--tit") |> html_text2()
+ups    <- cards |> html_element(".bili-video-card__info--owner") |> html_text2()
+dates  <- cards |> html_element(".bili-video-card__info--date") |> html_text2()
+
+# I don't understand the code below.
+# It seems to give a back up option.
+if (length(ups) == 0) {
+  ups <- cards |> html_element(".bili-video-card__info--author") |> html_text2()
+}
+if (length(dates) == 0) {
+  dates <- cards |> html_element(".bili-video-card__info--pubdate") |> html_text2()
+}
+
+# build the dataframe
+df <- data.frame(
+  title = titles,
+  up    = ups,
+  date  = dates,
+  stringsAsFactors = FALSE
+)
+
+# output
+write_xlsx(df, path = "Cantonese_videos.xlsx")
+
+# close the window
+b$close()
+```
+
+    [1] TRUE
+
+#### Step 2 input the view count (manually?)
+
+I found the view count in the HTML code, but I wasn’t able to extract
+it. I’ll keep working on it a bit more. It should be extractable.
+
+I actually entered the view counts manually, but I accidentally ran the
+above code again and the file was overwritten 😭. I’ll work on
+extracting it from the HTML language instead of entering manually.
+
+#### Step 3 code the video type
+
+I had also coded different videos based on their content (e.g., music,
+humor, mocking, etc.), but unfortunately, I lost that data as well
+because the file was overwritten.
+
+#### Step 4 decide the dialects
+
+Another step I completed was deciding which dialects to focus on.
+Instead of using linguistically defined Chinese dialects or varieties, I
+decided to use provinces. I found data on the GDP of each province and
+ranked them from highest to lowest. I will focus on the top five
+provinces.
+
+### Step 5 repeat the previous steps
+
+I have tried another code and was able to extract the titles of the 42
+most frequently viewed videos for all five dialects. But this morning, I
+updated the code to include the uploader’s name and the publication date
+for Cantonese. I haven’t had a chance to update the code for the other
+dialects because I was manualing entering view counts.
