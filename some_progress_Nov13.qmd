@@ -1,0 +1,447 @@
+---
+title: "Pipeline"
+author: "Zihan Gao"
+date: "Nov 13, 2025"
+format: gfm
+---
+
+```{r load packages}
+library(rvest)
+library(chromote)
+library(dplyr)
+library(writexl)
+library(readxl)
+library(tidyverse)
+```
+
+```{r search Cantonese videos}
+#| eval: false
+
+# create Chromote session
+b <- ChromoteSession$new()
+
+# name keyword (Cantonese), and rank videos by views
+keyword <- "粤语" # Cantonese
+url <- paste0(
+  "https://search.bilibili.com/all?keyword=",
+  URLencode(keyword),
+  "&order=click"  # rank by views
+)
+
+# open the page
+b$Page$navigate(url)
+
+# wait for the page to load (6 seconds)
+Sys.sleep(6)
+
+# get the HTML page
+html_text <- b$Runtime$evaluate("document.documentElement.outerHTML")$result$value
+
+# read the HTML
+html <- read_html(html_text)
+
+# close the window
+b$close()
+```
+
+```{r extract data for Cantonese}
+#| eval: false
+
+# select all video cards (card = video entry)
+cards <- html_elements(html, ".bili-video-card")
+
+# extract video titles 
+titles <- cards |>
+  html_element(".bili-video-card__info--tit") |> 
+  html_text2()
+
+# extract uploaders (authors of each video)
+uploader <- cards |> 
+  html_element(".bili-video-card__info--author") |> 
+  html_text2()
+
+# extract upload dates
+dates  <- cards |> 
+  html_element(".bili-video-card__info--date") |> 
+  html_text2()
+
+# extract view counts
+views <- cards |> 
+  html_element(".bili-video-card__stats--item") |>
+  html_element("span:first-of-type") |> 
+  html_text2()
+
+# extract video URLs
+URL <- cards |> 
+  html_elements("a[href*='bilibili.com/video']") |> 
+  html_attr("href")
+
+# for some reasons, there are two same results (URL) for each video, so it generated 84 results instead of 42.
+
+# remove the reduplicated ones
+URL.df <- data.frame(URL) |> 
+  distinct()
+
+# build a dataframe
+df <- data.frame(
+  title = titles,
+  uploader = uploader,
+  date  = dates,
+  views = views,
+  URL = unique(URL)
+)
+
+# write the dataframe to a .csv file
+write_csv(df, "preliminary_data/Cantonese.csv")
+```
+
+
+## apply the code to the other four dialects (code at the bottom)
+
+## combine the files into one
+```{r combine five files into one}
+# read in 5 excel files
+Guangdong <- read.csv("Cantonese_videos.csv")
+Jiangsu <- read.csv("Jiangsu_videos.xlsx")
+Shandong <- read.csv("Shandong_videos.xlsx")
+Zhejiang <- read.csv("Zhejiang_videos.xlsx")
+Sichuan <- read.csv("Sichuan_videos.xlsx")
+
+# combine them into one dataframe
+top5 <- bind_rows(Guangdong, Jiangsu, Shandong, Zhejiang, Sichuan)
+
+# write the dataframe to an Excel file
+# I was about to clean the data but I am too tired now. I will just save them for now.
+write_xlsx(top5, path = "preliminary_data/top5.xlsx")
+```
+
+
+
+
+
+
+
+
+
+
+```{r search Jiangsu dialect videos}
+#| eval: false
+
+# create Chromote session
+b <- ChromoteSession$new()
+
+# name keyword (Jiangsu dialect), and rank videos by views
+keyword <- "江苏话" # Jiangsu dialect
+url <- paste0(
+  "https://search.bilibili.com/all?keyword=",
+  URLencode(keyword),
+  "&order=click"  # rank by views
+)
+
+# open the page
+b$Page$navigate(url)
+
+# wait for the page to load (6 seconds)
+Sys.sleep(6)
+
+# get the HTML page
+html_text <- b$Runtime$evaluate("document.documentElement.outerHTML")$result$value
+
+# read the HTML
+html <- read_html(html_text)
+
+# close the window
+b$close()
+```
+
+
+```{r extract data for Jiangsu dialect}
+#| eval: false
+
+# select all video cards (card = video entry)
+cards <- html_elements(html, ".bili-video-card")
+
+# extract video titles 
+titles <- cards |>
+  html_element(".bili-video-card__info--tit") |> 
+  html_text2()
+
+# extract uploaders (authors of each video)
+uploader <- cards |> 
+  html_element(".bili-video-card__info--author") |> 
+  html_text2()
+
+# extract upload dates
+dates  <- cards |> 
+  html_element(".bili-video-card__info--date") |> 
+  html_text2()
+
+# extract view counts
+views <- cards |> 
+  html_element(".bili-video-card__stats--item") |>
+  html_element("span:first-of-type") |> 
+  html_text2()
+
+# extract video URLs
+URL.df <- data.frame(
+  cards |> 
+  html_elements("a[href*='bilibili.com/video']") |> 
+  html_attr("href")) |> 
+  distinct()
+
+# build a dataframe
+df <- data.frame(
+  title = titles,
+  uploader = uploader,
+  date  = dates,
+  views = views,
+  URL = URL.df
+)
+
+# write the dataframe to a .csv file
+write_csv(df, "preliminary_data/Jiangsu_videos.csv")
+```
+
+
+#### Shandong dialect
+```{r search Shandong dialect videos}
+#| eval: false
+
+# create Chromote session
+b <- ChromoteSession$new()
+
+# name keyword (Shandong dialect), and rank videos by views
+keyword <- "山东话" # Shandong dialect
+url <- paste0(
+  "https://search.bilibili.com/all?keyword=",
+  URLencode(keyword),
+  "&order=click"  # rank by views
+)
+
+# open the page
+b$Page$navigate(url)
+
+# wait for the page to load (6 seconds)
+Sys.sleep(6)
+
+# get the HTML page
+html_text <- b$Runtime$evaluate("document.documentElement.outerHTML")$result$value
+
+# read the HTML
+html <- read_html(html_text)
+
+# close the window
+b$close()
+```
+
+
+```{r extract data for Shandong dialect}
+#| eval: false
+
+# select all video cards (card = video entry)
+cards <- html_elements(html, ".bili-video-card")
+
+# extract video titles 
+titles <- cards |>
+  html_element(".bili-video-card__info--tit") |> 
+  html_text2()
+
+# extract uploaders (authors of each video)
+uploader <- cards |> 
+  html_element(".bili-video-card__info--author") |> 
+  html_text2()
+
+# extract upload dates
+dates  <- cards |> 
+  html_element(".bili-video-card__info--date") |> 
+  html_text2()
+
+# extract view counts
+views <- cards |> 
+  html_element(".bili-video-card__stats--item") |>
+  html_element("span:first-of-type") |> 
+  html_text2()
+
+# extract video URLs
+URL.df <- data.frame(
+  cards |> 
+  html_elements("a[href*='bilibili.com/video']") |> 
+  html_attr("href")) |> 
+  distinct()
+
+# build a dataframe
+df <- data.frame(
+  title = titles,
+  uploader = uploader,
+  date  = dates,
+  views = views,
+  URL = URL.df
+)
+
+# write the dataframe to a .csv file
+write_csv(df, "preliminary_data/Shandong_videos.csv")
+```
+
+
+#### Sichuan dialect
+```{r search Sichuan dialect videos}
+#| eval: false
+
+# create Chromote session
+b <- ChromoteSession$new()
+
+# name keyword (Sichuan dialect), and rank videos by views
+keyword <- "四川话" # Sichuan dialect
+url <- paste0(
+  "https://search.bilibili.com/all?keyword=",
+  URLencode(keyword),
+  "&order=click"  # rank by views
+)
+
+# open the page
+b$Page$navigate(url)
+
+# wait for the page to load (6 seconds)
+Sys.sleep(6)
+
+# get the HTML page
+html_text <- b$Runtime$evaluate("document.documentElement.outerHTML")$result$value
+
+# read the HTML
+html <- read_html(html_text)
+
+# close the window
+b$close()
+```
+
+
+```{r extract data for Sichuan dialect}
+#| eval: false
+
+# select all video cards (card = video entry)
+cards <- html_elements(html, ".bili-video-card")
+
+# extract video titles 
+titles <- cards |>
+  html_element(".bili-video-card__info--tit") |> 
+  html_text2()
+
+# extract uploaders (authors of each video)
+uploader <- cards |> 
+  html_element(".bili-video-card__info--author") |> 
+  html_text2()
+
+# extract upload dates
+dates  <- cards |> 
+  html_element(".bili-video-card__info--date") |> 
+  html_text2()
+
+# extract view counts
+views <- cards |> 
+  html_element(".bili-video-card__stats--item") |>
+  html_element("span:first-of-type") |> 
+  html_text2()
+
+# extract video URLs
+URL.df <- data.frame(
+  cards |> 
+  html_elements("a[href*='bilibili.com/video']") |> 
+  html_attr("href")) |> 
+  distinct()
+
+# build a dataframe
+df <- data.frame(
+  title = titles,
+  uploader = uploader,
+  date  = dates,
+  views = views,
+  URL = URL.df
+)
+
+# write the dataframe to a .csv file
+write_csv(df, "preliminary_data/Sichuan_videos.csv")
+```
+
+
+#### Zhejiang dialect
+```{r search Zhejiang dialect videos}
+#| eval: false
+
+# create Chromote session
+b <- ChromoteSession$new()
+
+# name keyword (Zhejiang dialect), and rank videos by views
+keyword <- "浙江话" # Zhejiang dialect
+url <- paste0(
+  "https://search.bilibili.com/all?keyword=",
+  URLencode(keyword),
+  "&order=click"  # rank by views
+)
+
+# open the page
+b$Page$navigate(url)
+
+# wait for the page to load (6 seconds)
+Sys.sleep(6)
+
+# get the HTML page
+html_text <- b$Runtime$evaluate("document.documentElement.outerHTML")$result$value
+
+# read the HTML
+html <- read_html(html_text)
+
+# close the window
+b$close()
+```
+
+
+```{r extract data for Zhejiang dialect}
+#| eval: false
+
+# select all video cards (card = video entry)
+cards <- html_elements(html, ".bili-video-card")
+
+# extract video titles 
+titles <- cards |>
+  html_element(".bili-video-card__info--tit") |> 
+  html_text2()
+
+# extract uploaders (authors of each video)
+uploader <- cards |> 
+  html_element(".bili-video-card__info--author") |> 
+  html_text2()
+
+# extract upload dates
+dates  <- cards |> 
+  html_element(".bili-video-card__info--date") |> 
+  html_text2()
+
+# extract view counts
+views <- cards |> 
+  html_element(".bili-video-card__stats--item") |>
+  html_element("span:first-of-type") |> 
+  html_text2()
+
+# extract video URLs
+URL.df <- data.frame(
+  cards |> 
+  html_elements("a[href*='bilibili.com/video']") |> 
+  html_attr("href")) |> 
+  distinct()
+
+# build a dataframe
+df <- data.frame(
+  title = titles,
+  uploader = uploader,
+  date  = dates,
+  views = views,
+  URL = URL.df
+)
+
+# write the dataframe to a .csv file
+write_csv(df, "preliminary_data/Zhejiang_videos.csv")
+```
+
+
+
+
